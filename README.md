@@ -18,13 +18,12 @@ Python-скрипт: [Файл bot.py](https://github.com/EkaterinaDorokhova/DE_
 
 ### 1. Создана виртуальная машина
 
-- Платформа: Yandex Cloud
-- ОС: Ubuntu 22.04
-- Подключение по SSH с использованием ключей
+- Платформа: Yandex Cloud  
+- OC: Ubuntu 22.04  
+- Хранение логов и данных: на внутреннем диске ВМ.
+- Запуск и управление: для поддержания постоянного доступа вместо подключения через SSH из локального терминала, используется Web SSH в интерфейсе Yandex Cloud Console.
 
-```bash
-ssh -i ~/.ssh/id_ed25519 ubuntu@<IP_адрес>
-```
+Вход в ВМ осуществляется через браузер в интерфейсе Yandex Cloud, раздел Виртуальные машины" - "Подключиться" - "Открыть Web SSH".
 
 ### 2. Установлены инструменты и подготовлен проект
 
@@ -53,14 +52,20 @@ telegram_bot_project/
 ├── data/
 │   └── log.csv
 ├── venv/
+└── upload_logs_to_yadisk_yadisklib.py
 ```
+Где:
+- bot.py - основной скрипт Telegram-бота
+- data/ - апка для логов
+- log.csv - CSV-файл с логами действий
+- venv/ - Виртуальное окружение Python
+- upload_logs_to_yadisk_yadisklib.py - Скрипт для экспорта логов на Яндекс.Диск
 
 ---
 
 ### 3. Настроен Telegram-бот
 - Создан бот через @BotFather
-- Получен токен доступа
-- Токен подставлен в переменную `TELEGRAM_TOKEN` в `bot.py`
+- Получен токен доступа и подставлен в переменную `TELEGRAM_TOKEN` в `bot.py`
 
 ---
 
@@ -253,4 +258,59 @@ python3 bot.py
 
 
 ## Часть 2 (HW2: интеграция с облачным сервисом Яндекс Диск и визуализации в Yandex DataLens)
-Файл логов
+
+### Настроен перенос файла логов с ВМ в Яндекс.Диск
+
+Был реализован автоматический перенос данных с виртуальной машины в облачное хранилище Яндекс.Диск. Процесс осуществляется с помощью скрипта:
+Python-скрипт: [Файл upload_logs_to_yadisk_yadisklib.py](https://github.com/EkaterinaDorokhova/DE_HW1-2/blob/main/upload_logs_to_yadisk_yadisklib.py)
+
+Процесс:
+
+1. Загружается лог-файл Telegram-бота в формате `.csv`.
+
+```python
+import yadisk
+import pandas as pd
+
+# Настройки путей
+LOCAL_CSV_PATH = "data/log.csv"
+XLSX_PATH = "data/log.xlsx"
+REMOTE_PATH = "/log.xlsx"
+```   
+
+2. Авторизуется в Яндекс.Диске с использованием OAuth-токена.
+```python
+# OAuth-токен
+OAUTH_TOKEN = "y0__xCtwfykqveAAhjWljcg1O2f8RICGIMXA9vRn5dN-6GzVa8qQOVVkw"
+
+# Авторизация
+y = yadisk.YaDisk(token=OAUTH_TOKEN)
+
+# Проверка авторизации
+if not y.check_token():
+    raise Exception("Токен недействителен. Проверь значение.")
+```
+
+3. Данные преобразуются в формат .xlsx с помощью библиотеки pandas.
+
+```python
+# Конвертация CSV в XLSX
+df = pd.read_csv(LOCAL_CSV_PATH)
+df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.strftime("%Y-%m-%d %H:%M:%>
+df.to_excel(XLSX_PATH, index=False)
+```
+   
+
+4. Загружает файл на Яндекс.Диск в указанный путь, с возможностью перезаписи при повторной загрузке.
+```python
+# Загрузка на Диск
+with open(XLSX_PATH, "rb") as f:
+    y.upload(f, REMOTE_PATH, overwrite=True)
+
+print("Файл успешно загружен на Яндекс.Диск!")
+```
+Скрипт обеспечивает автоматическую передачу данных (файл обновляется раз в час). 
+
+Затем из Яндекс.Диска файл загуржается в BI-систему Yandex DataLens для дальнейшей визуализации и анализа (используется встроенный коннектор DataLens, обновление раз в полчаса).
+
+Визуализация в Yandex DataLens: https://datalens.yandex/v55jstvi02f2h 
