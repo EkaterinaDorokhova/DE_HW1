@@ -5,8 +5,7 @@
 Бот для Telegram, развёрнутый на виртуальной машине Yandex Cloud:
 [Botishe_dly_proektisha_bot](https://t.me/Botishe_dly_proektisha_bot)
 
-Python-скрипт:
-
+Python-скрипт: [Файл bot.py](https://github.com/EkaterinaDorokhova/DE_HW1/blob/main/bot.py)
 
 ### Функционал:
 - Приём сообщений от пользователей
@@ -81,6 +80,8 @@ zip -r part1_logs.zip data/
 ```bash
 scp -i ~/.ssh/id_ed25519 ubuntu@<IP_адрес>:~/telegram_bot_project/part1_logs.zip ~/Downloads/
 ```
+
+Пример документа с логами: [Файл log.csv](https://github.com/EkaterinaDorokhova/DE_HW1/blob/main/log.csv)
 
 ---
 
